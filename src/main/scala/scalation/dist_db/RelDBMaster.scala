@@ -253,13 +253,13 @@ object RelDBMasterTest extends App {
 
 //    Thread.sleep(3000)
 
-    println("Select result:")
-    actor ! show("R1_Select")
+//    println("Select result:")
+//    actor ! show("R1_Select")
     //    println("Select done")
 
-//    actor ! project ("R1", Seq("Name", "Age"), "R1_Project")
+    actor ! project ("R1", Seq("Name", "Age"), "R1_Project")
 
-//    actor ! show ("R1_Project")
+    actor ! show ("R1_Project")
 /*
     actor ! nameAll*/
 

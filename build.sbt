@@ -39,7 +39,7 @@ lazy val root = (project in file("."))
 
   .settings (
     commonSettings,
-    name := "scalation_dist",
+    name := "scalation_ms",
 
     ////////////////////////////////////////////////////////////////////////////////
     // Scala Modules

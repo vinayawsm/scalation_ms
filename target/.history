@@ -1,1 +1,2 @@
 compile
+runMain scalation.dist_db.RelDBMasterTest
