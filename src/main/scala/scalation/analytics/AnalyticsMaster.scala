@@ -7,12 +7,11 @@ import scalation.linalgebra.VectorD
 import scalation.plot.Plot
 import scalation.random.Random
 
-/**
-  * Created by vinay on 11/28/18.
-  */
-class AnalyticsMaster extends Actor {
+class AnalyticsMaster extends Actor
+{
 
-    def analyticsHandler(): Receive = {
+    def analyticsHandler(): Receive =
+    {
         case expSmoothing (method, t, x, l, m, validateSteps, steps) =>
             val ts = new ExpSmoothing(x, l, m, validateSteps)
             method match {
@@ -32,28 +31,52 @@ class AnalyticsMaster extends Actor {
                     new Plot (t, x, s, "Optimized: Plot of x, new_x vs. t")
             }
 
-        case arima (method, t, y, d, p, q, steps) =>
+        case arima (method, t, y, d, p, q, transBack, steps) =>
             val ts = new ARIMA (t, y, d)
             method match {
                 case "AR" =>
                     val φ_a = ts.est_ar (p)
                     println (s"φ_a = $φ_a")
-                    new Plot (t, y, ts.predict_ar () + ts.mu, s"Plot of y, ar($p) vs. t")
+                    new Plot (t, y, ts.predict_ar (transBack) + ts.mu, s"Plot of y, ar($p) vs. t")
                     val ar_f = ts.forecast_ar (steps) + ts.mu
                     println (s"$steps-step ahead forecasts using AR($p) model = $ar_f")
                 case "MA" =>
                     val θ_a = ts.est_ma (q)
                     println (s"θ_a = $θ_a")
-                    new Plot (t, y, ts.predict_ma () + ts.mu, s"Plot of y, ma($q) vs. t")
+                    new Plot (t, y, ts.predict_ma (transBack) + ts.mu, s"Plot of y, ma($q) vs. t")
                     val ma_f = ts.forecast_ma (steps) + ts.mu
                     println (s"$steps-step ahead forecasts using MA($q) model = $ma_f")
                 case "ARMA" =>
                     val (φ, θ) = ts.est_arma (p, q)
                     println (s"φ = $φ, θ = $θ")
-                    new Plot (t, y, ts.predict_arma () + ts.mu, s"Plot of y, arma($p, $q) vs. t")
+                    new Plot (t, y, ts.predict_arma (transBack) + ts.mu, s"Plot of y, arma($p, $q) vs. t")
                     val arma_f = ts.forecast_arma (steps) + ts.mu
                     println (s"$steps-step ahead forecasts using ARMA($p, $q) model = $arma_f")
             }
+
+        case sarima (method, t, y, d, dd, period, xxreg, p, q ,steps, xxreg_f) =>
+            val ts = new SARIMA (y, d, dd, period, xxreg)
+            method match {
+                case "AR" =>
+                    ts.setPQ (p)
+                    ts.train ()
+                    new Plot (t, y, ts.fittedValues (), s"Plot of y, ar($p) vs. t", true)
+                    val ar_f = ts.forecast (steps, xxreg_f)
+                    println (s"$steps-step ahead forecasts using AR($p) model = $ar_f")
+                case "MA" =>
+                    ts.setPQ (0, q)
+                    ts.train ()
+                    new Plot (t, y, ts.fittedValues (), s"Plot of y, ma($q) vs. t", true)
+                    val ma_f = ts.forecast (steps, xxreg_f)
+                    println (s"$steps-step ahead forecasts using MA($q) model = $ma_f")
+                case "ARMA" =>
+                    ts.setPQ (p, q)
+                    ts.train ()
+                    new Plot (t, y, ts.fittedValues (), s"Plot of y, arma($p, $q) vs. t", true)
+                    val arma_f = ts.forecast (steps, xxreg_f)
+                    println (s"$steps-step ahead forecasts using ARMA($p, $q) model = $arma_f")
+            }
+
     }
 
     override def receive: Receive = analyticsHandler()

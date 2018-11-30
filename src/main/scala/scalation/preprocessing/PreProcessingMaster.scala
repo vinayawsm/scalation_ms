@@ -3,15 +3,15 @@ package scalation.preprocessing
 import akka.actor.Actor
 
 import scalation.columnar_db._
-import scalation.linalgebra.MatrixKind
 
 /**
   * Created by vinay on 11/8/18.
   */
-class PreProcessingMaster extends Actor {
+class PreProcessingMaster extends Actor
+{
 
-    def PPHandler(): Receive = {
-        case "abc" => println("abc")
+    def PPHandler(): Receive =
+    {
         case project (r, cNames) =>
             sender() ! r.project (cNames: _*)
 
@@ -61,8 +61,8 @@ class PreProcessingMaster extends Actor {
         case toVectorI2 (r, colName)    => sender() ! r.toVectorI (colName)
         case toVectorS2 (r, colName)    => sender() ! r.toVectorS (colName)
         case toRleVectorD (r, colPos)   => sender() ! r.toRleVectorD (colPos)
-        case toRleVectorD (r, colPos)   => sender() ! r.toRleVectorI (colPos)
-        case toRleVectorD (r, colPos)   => sender() ! r.toRleVectorS (colPos)
+        case toRleVectorI (r, colPos)   => sender() ! r.toRleVectorI (colPos)
+        case toRleVectorS (r, colPos)   => sender() ! r.toRleVectorS (colPos)
         case toRleVectorD2 (r, colName) => sender() ! r.toRleVectorD (colName)
         case toRleVectorI2 (r, colName) => sender() ! r.toRleVectorI (colName)
         case toRleVectorS2 (r, colName) => sender() ! r.toRleVectorS (colName)

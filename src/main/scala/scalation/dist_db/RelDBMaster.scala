@@ -15,13 +15,15 @@ import scalation.linalgebra.Vec
   */
 
 
-class RelDBMaster extends DistUtil with Actor {
+class RelDBMaster extends DistUtil with Actor
+{
 
     // creates a router with `numOfRoutees` routees
     val router: ActorRef = context.actorOf (RoundRobinPool (numOfRoutees).props(Props[RelDBWorker]), "router")
 
     // DBHandler handles all the DB messages on master side
-    def DBHandler (): Receive = {
+    def DBHandler (): Receive =
+    {
 
         // create new relation
         case create (name, colname, key, domain) =>
