@@ -304,7 +304,7 @@ class MS_Master extends MasterUtil with Actor
 
         case recvMatrixS (mName, m) =>
             matSMap += (mName -> m)
-            updating += (mName -> false)e
+            updating += (mName -> false)
 
         case recvVectoD (vName, v) =>
             vecDMap += (vName -> v)
