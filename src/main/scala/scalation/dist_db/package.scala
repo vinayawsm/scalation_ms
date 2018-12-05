@@ -15,19 +15,6 @@ package object dist_db {
       */
     type Predicate [T] = (String, T => Boolean)
 
-    /** Boolean function that uses the values for two given column names (String, String)
-      *  in the predicate (e.g., used by 'thetajoin')
-      */
-    type Predicate2 [T] = (String, String, (T, T) => Boolean)
-
-    /** Indicates which relation and which column an aggregate is to be applied to
-      */
-    type AggFunction = (Relation, String) => Vec
-
-    /** Aggregate column type has Aggregate Funtion, new column name and old column name
-      */
-    type AggColumn = (AggFunction, String, String)
-
     case class create (name: String, colname: Seq[String], key: Int, domain: String)
     case class createIn (name: String, colname: Seq[String], key: Int, domain: String)
     case class createReply (name: String, n: Int)
