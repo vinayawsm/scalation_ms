@@ -1,6 +1,6 @@
 package scalation.master
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.routing.RoundRobinPool
 import akka.persistence.PersistentActor
 
@@ -308,6 +308,21 @@ class MS_Master extends MasterUtil with Actor
             vecSMap += (vName -> v)
             updating += (vName -> false)
 
+        case nameAll =>
+            println("Tables list: ")
+            tableMap.foreach (n => println(n._1))
+            println("\n")
+            println("Matrices list: ")
+            matDMap.foreach (n => println(n._1 + ", MatrixD"))
+            matIMap.foreach (n => println(n._1 + ", MatrixI"))
+            matSMap.foreach (n => println(n._1 + ", MatrixS"))
+            println("\n")
+            println("Vectors list: ")
+            vecDMap.foreach (n => println(n._1 + ", VectoD"))
+            vecIMap.foreach (n => println(n._1 + ", VectoI"))
+            vecSMap.foreach (n => println(n._1 + ", VectoS"))
+            println("\n")
+
 
     }
 
@@ -335,4 +350,34 @@ class MS_Master extends MasterUtil with Actor
         val newCol = (for (j <- r.col.indices) yield Vec.select (r.col(j), Seq.range(se, le))).toVector
         new Relation (r.name, r.colName, newCol, r.key, r.domain)
     }
+}
+
+//> runMain scalation.master.MS_MasterTest0
+object MS_MasterTest0 extends App {
+    val actorSystem = ActorSystem("RelationDBMasterTest")
+    val actor = actorSystem.actorOf(Props[MS_Master], "root")
+
+    actor ! create("R1", Seq("Name", "Age", "Weight"), 0, "SID")
+
+    actor ! tableGen("R1", 20)
+    actor ! show("R1")
+    actor ! saveRelation("R1")
+
+    Thread.sleep(10000)
+    actorSystem.terminate()
+}
+
+object MS_MasterTest0_1 extends App {
+    val actorSystem = ActorSystem("RelationDBMasterTest")
+    val actor = actorSystem.actorOf(Props[MS_Master], "root")
+
+    actor ! nameAll
+    actor ! getRelation ("R1")
+    Thread.sleep(2000)
+    actor ! nameAll
+
+    actor ! show ("R1")
+
+    Thread.sleep(10000)
+    actorSystem.terminate()
 }
