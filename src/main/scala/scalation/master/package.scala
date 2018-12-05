@@ -2,6 +2,7 @@ package scalation
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scalation.columnar_db.TableObj.Row
 import scalation.linalgebra._
 import scalation.columnar_db.{Imputation, ImputeMean, Relation, Table}
 import scalation.linalgebra.MatrixKind.MatrixKind
@@ -17,12 +18,54 @@ package object master
     case class getRelation (n: String)
     case class getRelReply (n: String, r: Relation)
 
+    /** Boolean function that uses the value for the given column name (String)
+      *  in the predicate (e.g., used by 'where' and 'filter')
+      */
+    type Predicate [T] = (String, T => Boolean)
+
+    case class create (name: String, colname: Seq[String], key: Int, domain: String)
+
+    case class add (name: String, t: Row)
+
+    case class materialize (name: String)
+
+    case class tableGen (name: String, count: Int)
+
+    case class show (name: String)
+
+    // def select [T : ClassTag] (cName: String, p: T => Boolean): Relation
+    case class select [T: ClassTag] (name: String, p: Predicate[T], rName: String)
+
+    // def project (cName: String*): Relation
+    case class project (name: String, cNames: Seq[String], rName: String)
+
+    // def union (r2: Table): Relation
+    case class union (name: String, name2: String, rName: String)
+
+    // def minus (r2: Table): Relation
+    case class minus (name: String, name2: String, rName: String)
+
+    // def product (r2: Table): Relation
+    case class product (r: String, q: String, rName: String)
+
+    // def join (r2: Table): Table
+    case class join (r: String, q: String, rName: String)
+
+    // def intersect (_r2: Table): Relation
+    case class intersect (r: String, q: String, rName: String)
+
+    case class relReply (id: String, r: Relation, rName: String)
+
+    case class delete (name: String)
+
+    case object nameAll
+
 
 
     ///////////////////////////////////////////////////////////// preprocessing
 
     // def project (cName: String*): Relation
-    case class project (r: Relation, cNames: Seq[String], rName: String)
+    case class pp_project (r: Relation, cNames: Seq[String], rName: String)
 
     // def mapToInt (s: VectoS): (VectoI, BiMap [StrNum, Int])
     case class mapToInt (v: VectoS, vName: String)

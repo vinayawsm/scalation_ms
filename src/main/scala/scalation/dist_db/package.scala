@@ -59,8 +59,7 @@ package object dist_db {
     case class intersect (r: String, q: String, rName: String)
     case class intersectIn (uc: Int, r: Relation, q: Relation, rName: String)
 
-    case class relReply (id: String, r: Relation)
-    case class relReply2 (id: String, r: Relation, rName: String)
+    case class relReply (id: String, r: Relation, rName: String)
 
     case class delete (name: String)
 

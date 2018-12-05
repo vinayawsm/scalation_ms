@@ -87,21 +87,11 @@ class MS_Master extends MasterUtil with Actor
             }
             updating += (name -> false)
 
-        // reply for create message. recieves name of relation and status (-1 => already exists, else => created)
-        case createReply (name: String, n: Int) =>
-            if (n == -1) println ("Table " + name + " already exists")
-            else println ("Table " + name + " created")
-
         // add new row to the table
         case add (name, t) =>
             updating += (name -> true)
             if (tableMap.exists(_._1 == name)) tableMap(name).add(t)
             updating += (name -> false)
-
-        // reply for add message. recieves name of relation and status (-1 => table doesn't exists)
-        case addReply (name: String, n: Int) =>
-            if (n == -1) println ("Table " + name + " doesn't exists")
-            else println ("Row added to table " + name)
 
         // materialize the table. must do after addition of table rows
         case materialize (name) =>
@@ -185,7 +175,7 @@ class MS_Master extends MasterUtil with Actor
 
 
         // preprocessing
-        case project (r, cNames, rName) =>
+        case pp_project (r, cNames, rName) =>
             pp ! preprocessing.project (r, cNames, rName)
 
         case mapToInt (v, vName) =>
@@ -274,7 +264,7 @@ class MS_Master extends MasterUtil with Actor
 
         // result methods
 
-        case relReply2 (id, r, rName) =>
+        case relReply (id, r, rName) =>
             // add elements to retTableMap -> do union of all the results -> (remove the entry from retTableMap)
             if (retTableMap.exists (_._1 == id))
                 retTableMap (id) += r

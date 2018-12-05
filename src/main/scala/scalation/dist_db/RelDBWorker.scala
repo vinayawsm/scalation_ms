@@ -20,19 +20,19 @@ class RelDBWorker extends Actor {
     def DBWorker() : Receive = {
 
         case selectIn (uc, r, p, rName) =>
-            sender() ! relReply2 ("select_" + uc + "_" + rName, r.select(p._1, p._2), rName)
+            sender() ! relReply ("select_" + uc + "_" + rName, r.select(p._1, p._2), rName)
 
         case minusIn (uc, r, q, rName) =>
-            sender() ! relReply2 ("minus_" + uc + "_" + rName, r.minus(q), rName)
+            sender() ! relReply ("minus_" + uc + "_" + rName, r.minus(q), rName)
 
         case productIn (uc, r, q, rName) =>
-            sender() ! relReply2 ("product_" + uc + "_" + rName, r.product(q), rName)
+            sender() ! relReply ("product_" + uc + "_" + rName, r.product(q), rName)
 
         case joinIn (uc, r, q, rName) =>
-            sender() ! relReply2 ("product_" + uc + "_" + rName, r.product(q), rName)
+            sender() ! relReply ("product_" + uc + "_" + rName, r.product(q), rName)
 
         case intersectIn (uc, r, q, rName) =>
-            sender() ! relReply2 ("product_" + uc + "_" + rName, r.intersect(q), rName)
+            sender() ! relReply ("product_" + uc + "_" + rName, r.intersect(q), rName)
 
     }
 

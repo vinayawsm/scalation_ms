@@ -131,21 +131,7 @@ class RelDBMaster extends DistUtil with Actor
             relCheck ("show", name)
             rSeq (tableMap (name)).show()
 
-        case relReply (id, r) =>
-            // add elements to retTableMap -> do union of all the results -> (remove the entry from retTableMap)
-            if (retTableMap.exists (_._1 == id))
-                retTableMap (id) += r
-            else
-                retTableMap += (id -> ArrayBuffer(r))
-            if (retTableMap (id).size == numOfRoutees) {
-                var r: Relation = retTableMap (id)(0)
-                for (i <- 1 until numOfRoutees)
-                    r = r union retTableMap (id)(i)
-                r.show ()
-                retTableMap -= id
-            }
-
-        case relReply2 (id, r, rName) =>
+        case relReply (id, r, rName) =>
             // add elements to retTableMap -> do union of all the results -> (remove the entry from retTableMap)
             if (retTableMap.exists (_._1 == id))
                 retTableMap (id) += r
