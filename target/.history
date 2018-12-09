@@ -1,2 +1,16 @@
 compile
 runMain scalation.dist_db.RelDBMasterTest
+compile
+runMain scalation.analytics.AnalyticsMasterTest
+clean
+buildDependencies
+compile
+runMain scalation.master.MS_MasterTest0
+runMain scalation.master.MS_MasterTest0_1
+runMain scalation.master.MS_MasterTest0
+runMain scalation.master.MS_MasterTest0_1
+runMain scalation.master.MS_MasterTest0
+runMain scalation.master.MS_MasterTest0_1
+runMain scalation.master.MS_MasterTest1
+runMain scalation.master.MS_MasterTest2
+compile

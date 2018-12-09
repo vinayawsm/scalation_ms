@@ -1,9 +1,27 @@
 package scalation
 
-import scalation.linalgebra.{MatriD, VectoD}
+import scalation.linalgebra._
 
 package object analytics
 {
+
+    type Strings = Array [String]
+
+    // abstract class ClassifierInt (x: MatriI, y: VectoI, protected var fn: Strings = null,
+    //                              k: Int, protected var cn: Strings = null)
+    // method: which method to use
+    //          (BayesClassifier, DecisionTreeID3, NullModel)
+    // sbc: sub-bayes classifier method
+    //          {Naive Bayes, 1-BAN, TAN Bayes, 2-BAN-OS}
+    // modelName: name with which this model should be saved as
+    case class ClassifierInt (method: String, x: MatriI = null, y: VectoI = null, fn: Strings = null, k: Int, cn: Strings = null,
+                              vc: Array[Int] = null, me: Float = 0, th: Double = 0.0, sbc: String = "Naive Bayes", modelName: String)
+
+
+    case class ClassifierReal (method: String, x: MatriD = null, xv: VectorD = null, y: VectoI = null, fn: Strings = null,
+                               k: Int = 2, cn: Strings = null, isConst: Array [Boolean], vc: Array[Int] = null, td: Int = 0,
+                               nF: Int = 1, bR: Double = 1.0, fS: Int = 1, s: Int = 223, modelName: String)
+
 
     // class ExpSmoothing (y_ : VectoD, ll: Int = 1, multiplicative : Boolean = false, validateSteps : Int = 1)
     // method - "Customized" or "Optimized"

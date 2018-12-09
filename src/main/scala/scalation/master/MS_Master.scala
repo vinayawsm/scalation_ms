@@ -87,6 +87,15 @@ class MS_Master extends MasterUtil with Actor
             }
             updating += (name -> false)
 
+        // create new relation
+        case createFromCSV (fname, name, colname, key, domain, skip, eSep) =>
+            updating += (name -> true)
+            if (!tableMap.exists(_._1 == name)) {
+                val r = Relation (fname, name, colname, key, domain, skip, eSep)
+                tableMap += (name -> r)
+            }
+            updating += (name -> false)
+
         // add new row to the table
         case add (name, t) =>
             updating += (name -> true)
@@ -165,9 +174,9 @@ class MS_Master extends MasterUtil with Actor
 
         // show the table
         // if you are getting updating warning, you may add sleep(time) before calling show()
-        case show (name) =>
+        case show (name, limit) =>
             updCheck ("show", name)
-            tableMap (name).show()
+            tableMap (name).show(limit)
 
         case delete (name) =>
             updCheck ("delete", name)
@@ -308,6 +317,13 @@ class MS_Master extends MasterUtil with Actor
             vecSMap += (vName -> v)
             updating += (vName -> false)
 
+        case printPaths() =>
+            println("Master: ", self.path.address.host)
+            println("DB: ", db.path.address.host)
+            println("PP: " + pp.path)
+            println("PP_host: " + pp.path.address.hostPort)
+            println("AN: " + an.path)
+
         case nameAll =>
             println("Tables list: ")
             tableMap.foreach (n => println(n._1))
@@ -353,7 +369,8 @@ class MS_Master extends MasterUtil with Actor
 }
 
 //> runMain scalation.master.MS_MasterTest0
-object MS_MasterTest0 extends App {
+object MS_MasterTest0 extends App
+{
     val actorSystem = ActorSystem("RelationDBMasterTest")
     val actor = actorSystem.actorOf(Props[MS_Master], "root")
 
@@ -367,7 +384,8 @@ object MS_MasterTest0 extends App {
     actorSystem.terminate()
 }
 
-object MS_MasterTest0_1 extends App {
+object MS_MasterTest0_1 extends App
+{
     val actorSystem = ActorSystem("RelationDBMasterTest")
     val actor = actorSystem.actorOf(Props[MS_Master], "root")
 
@@ -379,5 +397,32 @@ object MS_MasterTest0_1 extends App {
     actor ! show ("R1")
 
     Thread.sleep(10000)
+    actorSystem.terminate()
+}
+
+object MS_MasterTest1 extends App
+{
+    val actorSystem = ActorSystem ("MS_MasterTest1")
+    val actor = actorSystem.actorOf (Props[MS_Master], "root")
+
+    actor ! createFromCSV ("data/files/5_N_HV_1108436.csv", "table1", Seq("Time", "A", "Vehicles", "B", "Speed") , 0, "TIIDD")
+    actor ! show("table1", 5)
+
+
+    Thread.sleep(10000)
+    actorSystem.terminate()
+}
+
+object MS_MasterTest2 extends App
+{
+
+    val actorSystem = ActorSystem ("MS_MasterTest1")
+    val actor = actorSystem.actorOf (Props[MS_Master], "root")
+
+    println(actor.path)
+
+    actor ! printPaths()
+
+    Thread.sleep(1000)
     actorSystem.terminate()
 }

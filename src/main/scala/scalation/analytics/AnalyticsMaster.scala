@@ -2,16 +2,65 @@ package scalation.analytics
 
 import akka.actor.{Actor, ActorSystem, Props}
 
+import scalation.analytics.classifier._
 import scalation.analytics.forecaster._
-import scalation.linalgebra.VectorD
+import scalation.linalgebra.{MatrixD, VectorD}
 import scalation.plot.Plot
 import scalation.random.Random
 
 class AnalyticsMaster extends Actor
 {
 
+    var ci: Map[String, ClassifierInt] = Map[String, ClassifierInt]()
+
     def analyticsHandler(): Receive =
     {
+        // classifiers
+        case ClassifierInt (method, x, y, fn, k, cn, vc, me, th, sbc, modelName) =>
+            method match {
+                case "BayesClassifier" =>
+                    val bc = sbc match {
+                        case "Naive Bayes"      =>  BayesClassifier (x, fn, k, cn, vc, me)
+                        case "1-BAN"            =>  BayesClassifier (x, fn, k, cn, vc, me, th)
+                        case "TAN Bayes"        =>  BayesClassifier (x, fn, k, cn, me, vc)
+                        case "2-BAN-OS"         =>  BayesClassifier (x, fn, k, cn, vc, th, me)
+                    }
+                    // save bc to map. What should the map type be? Map[String, ? ]
+                    // ? = classifierInt doesn't look working
+                    // ci += (modelName -> bc.asInstanceOf[ClassifierInt])
+                    // ci(modelName).featureSelection()
+
+                case "DecisionTreeID3" =>
+                    val tree = DecisionTreeID3.test (x, fn, k, cn, vc)
+
+                case "NullModel" =>
+                    val nm = new classifier.NullModel (y, k, cn)
+            }
+
+        case ClassifierReal (method, x, xv, y, fn, k, cn, isConst, vc, td, nf, br, fs, s, modelName) =>
+            method match {
+                case "NaiveBayesR" =>
+                    val nbr = new NaiveBayesR (x, y, fn, k, cn)
+                case "LogisticRegression" =>
+                    val lrg = new LogisticRegression (x, y, fn, cn)
+                case "LDA" =>
+                    val lda = new LDA (x.asInstanceOf [MatrixD], y, fn, k, cn)
+                case "KNN_Classifier" =>
+                    val knn = new KNN_Classifier (x, y, fn, k, cn)
+                case "DecisionTreeC45" =>
+                    val tree = classifier.DecisionTreeC45.test (x, fn, isConst, k, cn, vc, td)
+                case "RandomForest" =>
+                    val rF = new RandomForest (x.asInstanceOf [MatrixD], y, nf, br, fs, k, s, fn, cn)
+                case "SimpleLDA" =>
+                    val slda = new SimpleLDA (xv, y, fn, k, cn)
+                case "SimpleLogisticRegression" =>
+                    val slr = new SimpleLogisticRegression (x, y, fn, cn)
+                case "SupportVectorMachine" =>
+                    val svm = new SupportVectorMachine (x.asInstanceOf [MatrixD], y, fn, cn)
+            }
+
+        /*
+
         case expSmoothing (method, t, x, l, m, validateSteps, steps) =>
             val ts = new ExpSmoothing(x, l, m, validateSteps)
             method match {
@@ -76,6 +125,7 @@ class AnalyticsMaster extends Actor
                     val arma_f = ts.forecast (steps, xxreg_f)
                     println (s"$steps-step ahead forecasts using ARMA($p, $q) model = $arma_f")
             }
+*/
 
     }
 
@@ -94,4 +144,7 @@ object AnalyticsMasterTest extends App {
     actor ! expSmoothing ("Optimized", t, y)
 
     actor ! arima ("AR", t, y)
+
+    Thread.sleep(10000)
+    actorSystem.terminate()
 }

@@ -25,13 +25,16 @@ package object master
 
     case class create (name: String, colname: Seq[String], key: Int, domain: String)
 
+    case class createFromCSV (fname: String, name: String, colname: Seq[String], key: Int, domain: String,
+                              skip: Int = 0, eSep: String = ",")
+
     case class add (name: String, t: Row)
 
     case class materialize (name: String)
 
     case class tableGen (name: String, count: Int)
 
-    case class show (name: String)
+    case class show (name: String, limit: Int = Int.MaxValue)
 
     // def select [T : ClassTag] (cName: String, p: T => Boolean): Relation
     case class select [T: ClassTag] (name: String, p: Predicate[T], rName: String)
@@ -152,4 +155,7 @@ package object master
     case class recvVectoI (vName: String, v: VectoI)
 
     case class recvVectoS (vName: String, v: VectoS)
+
+
+    case class printPaths ()
 }
