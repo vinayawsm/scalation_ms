@@ -19,7 +19,7 @@ class MS_Master extends MasterUtil with Actor
     for (i <- 0 until db_worker_count)
         db (i) = context.actorOf (Props[RelDBWorker], s"db_worker$i")
     val pp: ActorRef = context.actorOf (Props[PreProcessingMaster], "router")
-    val an: ActorRef = context.actorOf (RoundRobinPool (an_worker_count).props(Props[AnalyticsMaster]), "an_router")
+    val an: ActorRef = context.actorOf (RoundRobinPool (an_worker_count).props(Props[AnalyticsWorker]), "an_router")
 
     var relNodeMap : Map [String, Int] = Map [String, Int] ()
     var msgReplyMap: Map [String, Int] = Map [String, Int] () // unique code -> counter
