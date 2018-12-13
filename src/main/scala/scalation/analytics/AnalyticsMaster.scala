@@ -68,6 +68,18 @@ class AnalyticsMaster extends Actor
         case PredictorVec_crossValidate (name, algor, k, rando, rName) =>
             an ! PredictorVecIn_crossValidate (name, algor, k, rando, rName)
 
+        // PredictorMat
+        case PredictorMat_m (model, rName) =>
+            an ! PredictorMatIn_m (model, rName)
+
+        case PredictorMat_train (name, yy, rName) =>
+            an ! PredictorMatIn_train (name, yy, rName)
+
+        case PredictorMat_predict (name, v, z, rName) =>
+            an ! PredictorMatIn_predict (name, v, z, rName)
+
+        case PredictorMat_crossValidate (name, algor, k, rando, rName) =>
+            an ! PredictorMatIn_crossValidate (name, algor, k, rando, rName)
 
     }
 
@@ -104,7 +116,7 @@ object AnalyticsMasterTest1 extends App {
     println ("xy = " + xy)
 
     analytics ! ClassifierInt (BayesClassifier(xy,fn,k,cn,vc,me), "nb")
-    analytics ! ClassifierInt_
+
 
 
     Thread.sleep(10000)

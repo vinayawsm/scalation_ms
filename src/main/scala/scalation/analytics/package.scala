@@ -43,13 +43,26 @@ package object analytics
     case class PredictorVecIn_m (model: analytics.PredictorVec, name: String)
 
     case class PredictorVec_train (name: String, yy: VectoD = null, rName: String)
-    case class PredictorVec_predict (name: String, d: Double = null, v: VectoD = null, rName: String)
+    case class PredictorVec_predict (name: String, d: Double = -1.0, v: VectoD = null, rName: String)
     case class PredictorVec_crossValidate (name: String, algor: (VectoD, VectoD, Int) => PredictorVec, k: Int = 10,
                                            rando: Boolean = true, rName: String)
     case class PredictorVecIn_train (name: String, yy: VectoD = null, rName: String)
-    case class PredictorVecIn_predict (name: String, d: Double = null, v: VectoD = null, rName: String)
+    case class PredictorVecIn_predict (name: String, d: Double = -1.0, v: VectoD = null, rName: String)
     case class PredictorVecIn_crossValidate (name: String, algor: (VectoD, VectoD, Int) => PredictorVec, k: Int = 10,
                                            rando: Boolean = true, rName: String)
+
+    // PredictorMat
+    case class PredictorMat_m (model: analytics.PredictorMat, name: String)
+    case class PredictorMatIn_m (model: analytics.PredictorMat, name: String)
+
+    case class PredictorMat_train (name: String, yy: VectoD = null, rName: String)
+    case class PredictorMat_predict (name: String, v: VectoD = null, z: MatriD = null, rName: String)
+    case class PredictorMat_crossValidate (name: String, algor: (MatriD, VectoD) => PredictorMat, k: Int = 10,
+                                           rando: Boolean = true, rName: String)
+    case class PredictorMatIn_train (name: String, yy: VectoD = null, rName: String)
+    case class PredictorMatIn_predict (name: String, v: VectoD = null, z: MatriD = null, rName: String)
+    case class PredictorMatIn_crossValidate (name: String, algor: (MatriD, VectoD) => PredictorMat, k: Int = 10,
+                                             rando: Boolean = true, rName: String)
 
 
 }

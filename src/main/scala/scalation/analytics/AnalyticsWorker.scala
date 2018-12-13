@@ -3,7 +3,7 @@ package scalation.analytics
 import akka.actor.Actor
 
 import scalation.analytics
-import scalation.linalgebra.{MatriD, VectoI}
+import scalation.linalgebra.{MatriD, VectoD, VectoI}
 import scalation.stat.Statistic
 
 /**
@@ -13,6 +13,7 @@ class AnalyticsWorker extends Actor {
 
     var doubleMap : Map [String, Double] = Map [String, Double]()
     var matriDMap : Map [String, MatriD] = Map [String, MatriD]()
+    var vectoDMap : Map [String, VectoD] = Map [String, VectoD]()
     var vectoIMap : Map [String, VectoI] = Map [String, VectoI]()
 
     var ci : Map[String, analytics.classifier.ClassifierInt] = Map[String, analytics.classifier.ClassifierInt]()
@@ -23,7 +24,10 @@ class AnalyticsWorker extends Actor {
 
     var pv : Map [String, analytics.PredictorVec] = Map [String, PredictorVec]()
     var pvRegression: Map [String, analytics.Regression] = Map [String, analytics.Regression]()
-    var pvArStMap : Map [String, Statistic] = Map [String, Statistic])()
+    var pvArStMap : Map [String, Array[Statistic]] = Map [String, Array[Statistic]]()
+
+    var pr : Map [String, analytics.PredictorMat] = Map [String, PredictorMat]()
+    var prArStMap : Map [String, Array[Statistic]] = Map [String, Array[Statistic]]()
 
 
     def analyticsWorkerHandler(): Receive =
@@ -71,6 +75,7 @@ class AnalyticsWorker extends Actor {
         case ClassifierRealIn_calcCorrelation2 (name, zrg, xrg, rName) =>
             matriDMap += (rName -> cr(name).calcCorrelation2(zrg, xrg))
 
+
         // PredictorVec
         case PredictorVecIn_m (model, rName) =>
             pv += (rName -> model)
@@ -79,11 +84,27 @@ class AnalyticsWorker extends Actor {
             pvRegression += (rName -> pv(name).train(yy))
 
         case PredictorVecIn_predict (name, d, v, rName) =>
-            if (d == null) doubleMap += (rName -> pv(name).predict(v))
-            else doubleMap += (rName -> pv(name).predict(d))
+            if (v == null) doubleMap += (rName -> pv(name).predict(d))
+            else doubleMap += (rName -> pv(name).predict(v))
 
         case PredictorVecIn_crossValidate (name, algor, k, rando, rName) =>
             pvArStMap += (rName -> pv(name).crossValidate(algor, k, rando))
+
+
+        // PredictorMat
+        case PredictorMatIn_m (model, rName) =>
+            pr += (rName -> model)
+
+        case PredictorMatIn_train (name, yy, rName) =>
+            pr += (rName -> pr(name).train(yy))
+
+        case PredictorMatIn_predict (name, v, z, rName) =>
+            if (z == null) doubleMap += (rName -> pr(name).predict(v))
+            else vectoDMap += (rName -> pr(name).predict(z))
+
+        case PredictorMatIn_crossValidate (name, algor, k, rando, rName) =>
+            prArStMap += (rName -> pr(name).crossValidate(algor, k, rando))
+
     }
 
     override def receive: Receive = analyticsWorkerHandler ()
