@@ -2,6 +2,7 @@ package scalation
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scalation.analytics.{PredictorMat, PredictorVec}
 import scalation.columnar_db.TableObj.Row
 import scalation.linalgebra._
 import scalation.columnar_db.{Imputation, ImputeMean, Relation, Table}
@@ -12,54 +13,45 @@ package object master
 
     ///////////////////////////////////////////////////////////////// databases
 
-    // persistence methods
-    case class saveRelation (n: String)
-    case class dropRelation (n: String)
-    case class getRelation (n: String)
-    case class getRelReply (n: String, r: Relation)
-
     /** Boolean function that uses the value for the given column name (String)
       *  in the predicate (e.g., used by 'where' and 'filter')
       */
     type Predicate [T] = (String, T => Boolean)
 
-    case class create (name: String, colname: Seq[String], key: Int, domain: String)
-
-    case class createFromCSV (fname: String, name: String, colname: Seq[String], key: Int, domain: String,
+    case class createFromCSV (fname: Seq[String], name: Seq[String], colname: Seq[String], key: Int, domain: String,
                               skip: Int = 0, eSep: String = ",")
 
-    case class add (name: String, t: Row)
-
-    case class materialize (name: String)
-
-    case class tableGen (name: String, count: Int)
-
-    case class show (name: String, limit: Int = Int.MaxValue)
+    case class show (name: Seq [String], limit: Int = 5)
 
     // def select [T : ClassTag] (cName: String, p: T => Boolean): Relation
-    case class select [T: ClassTag] (name: String, p: Predicate[T], rName: String)
+    case class select [T: ClassTag] (name: Seq[String], rName: Seq[String], p: Predicate[T])
 
     // def project (cName: String*): Relation
-    case class project (name: String, cNames: Seq[String], rName: String)
+    case class project (name: Seq[String], rName: Seq[String], cNames: Seq[String])
 
     // def union (r2: Table): Relation
-    case class union (name: String, name2: String, rName: String)
+    case class union (name: Seq[String], rName: String)
+    case class unionReply (r: Relation, rName: String, t: Int, uc: String)
 
     // def minus (r2: Table): Relation
-    case class minus (name: String, name2: String, rName: String)
+    case class minus (name: Seq [String], name2: Seq[String], rName: Seq[String])
 
     // def product (r2: Table): Relation
-    case class product (r: String, q: String, rName: String)
+    case class product (name: Seq [String], name2: Seq[String], rName: Seq[String])
 
     // def join (r2: Table): Table
-    case class join (r: String, q: String, rName: String)
+    case class join (name: Seq [String], name2: Seq[String], rName: Seq[String])
 
     // def intersect (_r2: Table): Relation
-    case class intersect (r: String, q: String, rName: String)
+    case class intersect (name: Seq [String], name2: Seq[String], rName: Seq[String])
 
-    case class relReply (id: String, r: Relation, rName: String)
+    case class getRelation (name: Seq[String], rName: String)
 
-    case class delete (name: String)
+    case class relReply (id: String, r: Relation, rName: String, t: Int = 1)
+
+    case class msgReply (rName: String, uc: String, t: Int, method: String)
+
+    case class delete (name: Seq [String])
 
     case object nameAll
 
@@ -125,17 +117,39 @@ package object master
 
     ///////////////////////////////////////////////////////////////// analytics
 
-    // class ExpSmoothing (y_ : VectoD, ll: Int = 1, multiplicative : Boolean = false, validateSteps : Int = 1)
-    // method - "Customized" or "Optimized"
-    case class expSmoothing (method: String, t: VectoD, x: VectoD, l: Int = 1, m: Boolean = false, validateSteps: Int = 1, steps: Int = 1)
+    // ClassifierInt
+    case class ClassifierInt (model: analytics.classifier.ClassifierInt, name: String)
 
-    // class ARIMA (t: VectoD, y: VectoD, d: Int = 0)
-    // method - "AR", "MA", "ARMA"
-    case class arima (method: String, t: VectoD, y: VectoD, d: Int = 0, p: Int = 1, q: Int = 1,
-                      transBack: Boolean = true, steps: Int = 1)
+    case class ClassifierInt_classify (name: String, z: VectoD = null, xx: MatriI = null, rName: String)
+    case class ClassifierInt_test (name: String, itest: IndexedSeq [Int] = null, xx: MatriI = null, yy: VectoI = null, rName: String)
+    case class ClassifierInt_featureSelection (name: String, tol: Double = 0.01)
+    case class ClassifierInt_calcCorrelation (name: String, rName: String)
+    case class ClassifierInt_calcCorrelation2 (name: String, zrg: Range, xrg: Range, rName: String)
 
-    case class sarima (method: String, t: VectoD, y: VectoD, d: Int = 0, dd: Int = 0, period: Int = 1,
-                       xxreg: MatriD = null, p: Int = 1, q: Int = 1 ,steps: Int = 1, xxreg_f : MatriD = null)
+    // ClassifierReal
+    case class ClassifierReal (model: analytics.classifier.ClassifierReal, name: String)
+
+    case class ClassifierReal_classify (name: String, z: VectoD = null, xx: MatriD = null, rName: String)
+    case class ClassifierReal_test (name: String, itest: IndexedSeq [Int] = null, xx: MatriD = null, yy: VectoI = null, rName: String)
+    case class ClassifierReal_featureSelection (name: String, tol: Double)
+    case class ClassifierReal_calcCorrelation (name: String, rName: String)
+    case class ClassifierReal_calcCorrelation2 (name: String, zrg: Range, xrg: Range, rName: String)
+
+    // PredictorVec
+    case class PredictorVec_m (model: analytics.PredictorVec, name: String)
+
+    case class PredictorVec_train (name: String, yy: VectoD = null, rName: String)
+    case class PredictorVec_predict (name: String, d: Double = -1.0, v: VectoD = null, rName: String)
+    case class PredictorVec_crossValidate (name: String, algor: (VectoD, VectoD, Int) => PredictorVec, k: Int = 10,
+                                           rando: Boolean = true, rName: String)
+
+    // PredictorMat
+    case class PredictorMat_m (model: analytics.PredictorMat, name: String)
+
+    case class PredictorMat_train (name: String, yy: VectoD = null, rName: String)
+    case class PredictorMat_predict (name: String, v: VectoD = null, z: MatriD = null, rName: String)
+    case class PredictorMat_crossValidate (name: String, algor: (MatriD, VectoD) => PredictorMat, k: Int = 10,
+                                           rando: Boolean = true, rName: String)
 
 
     //////////////////////////////////////////////////////////// result methods

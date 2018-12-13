@@ -2,185 +2,143 @@ package scalation.master
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.routing.RoundRobinPool
-import akka.persistence.PersistentActor
 
 import scala.collection.mutable.ArrayBuffer
 import scalation.{analytics, preprocessing}
 import scalation.analytics._
 import scalation.columnar_db._
-import scalation.dist_db._
+import scalation.dist_db.{createFromCSVIn, _}
 import scalation.linalgebra.Vec
 import scalation.preprocessing.PreProcessingMaster
 
-object RelationPersistence {
-
-    private var mem: Map[ String, Relation ] = Map[ String, Relation ]()
-
-    case class m_saveRelation (n: String, r: Relation)
-    case class m_dropRelation (n: String)
-    case class p_saveRelation (n: String, r: Relation)
-    case class p_dropRelation (n: String)
-    case class p_getRelation (n: String)
-
-}
-
-class RelationPersistence extends PersistentActor {
-
-    override def persistenceId: String = "Relation_Persistence"
-
-    import RelationPersistence._
-
-    override def receiveRecover: Receive = {
-        case m_saveRelation (n, r) =>
-            mem = mem + (n -> r)
-        case m_dropRelation (n) =>
-            mem = mem - n
-    }
-
-    override def receiveCommand: Receive = {
-        case p_saveRelation (n, r) =>
-            persist (m_saveRelation (n, r)) {
-                savingRelation => mem = mem + (n -> r)
-            }
-        case p_dropRelation (n) =>
-            persist (m_dropRelation (n)) {
-                savingRelation => mem = mem - n
-            }
-        case p_getRelation (n) =>
-            sender() ! getRelReply (n, mem(n))
-    }
-
-}
 
 class MS_Master extends MasterUtil with Actor
 {
-    import RelationPersistence._
 
-    val db: ActorRef = context.actorOf (RoundRobinPool (db_worker_count).props(Props[RelDBWorker]), "db_router")
+    val db = new Array[ActorRef](db_worker_count)
+    for (i <- 0 until db_worker_count)
+        db (i) = context.actorOf (Props[RelDBWorker], s"db_worker$i")
     val pp: ActorRef = context.actorOf (Props[PreProcessingMaster], "router")
     val an: ActorRef = context.actorOf (RoundRobinPool (an_worker_count).props(Props[AnalyticsMaster]), "an_router")
 
-    val pactor: ActorRef = context.actorOf (Props[RelationPersistence], "persistence_actor")
+    var relNodeMap : Map [String, Int] = Map [String, Int] ()
+    var msgReplyMap: Map [String, Int] = Map [String, Int] () // unique code -> counter
 
     def messageHandler(): Receive =
     {
         // databases
 
-        // persistence methods
-        case saveRelation (n) =>
-            pactor ! p_saveRelation (n, tableMap(n))
-        case dropRelation (n) =>
-            pactor ! p_dropRelation (n)
-        case getRelation (n) =>
-            updating += (n -> true)
-            pactor ! p_getRelation (n)
-        case getRelReply (n, r) =>
-            if (!tableMap.exists(_._1 == n)) tableMap += (n -> r)
-            updating += (n -> false)
-
-        // create new relation
-        case create (name, colname, key, domain) =>
-            updating += (name -> true)
-            if (!tableMap.exists(_._1 == name)) {
-                val r = Relation (name, colname, Seq(), key, domain)
-                tableMap += (name -> r)
-            }
-            updating += (name -> false)
-
-        // create new relation
+        // Takes partitions of data from csv files and creates relations in sequential order
+        // (nth .csv file will be in n%numOfRoutees node)
         case createFromCSV (fname, name, colname, key, domain, skip, eSep) =>
-            updating += (name -> true)
-            if (!tableMap.exists(_._1 == name)) {
-                val r = Relation (fname, name, colname, key, domain, skip, eSep)
-                tableMap += (name -> r)
+            for (i <- 0 until fname.size) {
+                updating += (name (i) -> true)
+                db(i % db_worker_count) ! createFromCSVIn (fname(i), name(i), colname, key, domain, skip, eSep)
+                relNodeMap += (name (i) -> i % db_worker_count)
             }
+
+        // reply for create message. recieves name of relation and status (-1 => already exists, else => created)
+        case createReply (name) =>
             updating += (name -> false)
 
-        // add new row to the table
-        case add (name, t) =>
-            updating += (name -> true)
-            if (tableMap.exists(_._1 == name)) tableMap(name).add(t)
-            updating += (name -> false)
+        case select (name, rName, p) =>
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("select", rName (i))
+                updating += (rName (i) -> true)
+                db (relNodeMap (name (i))) ! selectIn (name (i), rName (i), p, name.size, "select_" + randi)
+            }
 
-        // materialize the table. must do after addition of table rows
-        case materialize (name) =>
-            updating += (name -> true)
-            tableMap(name).materialize()
-            updating += (name -> false)
+        case project (name, rName, cNames) =>
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("project", rName(i))
+                updating += (rName (i) -> true)
+                db (relNodeMap (name (i))) ! projectIn (name (i), rName (i), cNames, name.size, "project_" + randi)
+            }
 
-        // creates same "random" tables in all the worker nodes (this is for worker nodes to have entire tables)
-        case tableGen (name, count) =>
-            updating += (name -> true)
-            TableGen.popTable (tableMap(name), count)
-            updating += (name -> false)
-
-        case select (name, p, rName) =>
-            //            router ! Broadcast (selectIn (ri.nextInt(randomSeed), name, p))
-            updCheck ("select", name)
-            val (rid, rc, perN) = preComp (name, rName)
-            for (i <- 0 until db_worker_count)
-                db ! selectIn (rid, subRelation (tableMap(name), i * perN,  math.min(rc, perN * (i + 1))), p, rName)
-
-        // performed on master
-        case project (name, cNames, rName) =>
-            updCheck ("project", name)
+        // done on master
+        case union (name, rName) =>
+            val randi = ri.nextInt (randomSeed)
             updating += (rName -> true)
-            var pr = tableMap(name).project(cNames: _*)
-            pr.name = rName
-            tableMap += (rName -> pr)
-            updating += (rName -> false)
+            for (i <- 0 until name.size) {
+                updCheck ("union", name (i))
+                db (relNodeMap (name(i))) ! unionIn (name (i), rName, name.size, "union_" + randi)
+            }
 
-        // performed on master
-        case union (name, name2, rName) =>
-            updCheck ("union", name)
-            updCheck ("union", name2)
-            updating += (rName -> true)
-            var ur = tableMap(name).union(tableMap(name2))
-            ur.name = rName
-            tableMap += (rName -> ur)
-            updating += (rName -> false)
+        case unionReply (r, rName, t, uc) =>
+            if (retTableMap.exists (_._1 == uc))
+                retTableMap (uc) += r
+            else
+                retTableMap += (uc -> ArrayBuffer (r))
+            if (retTableMap (uc).size == t) {
+                var r: Relation = retTableMap (uc)(0)
+                for (i <- 1 until t)
+                    r = r union retTableMap (uc)(i)
+                r.name = rName
+                val randi = ri.nextInt (randomSeed)
+                db (randi % db_worker_count) ! createInR (r)
+                relNodeMap += (rName -> randi % db_worker_count)
+                updating += (rName -> false)
+            }
 
         case minus (name, name2, rName) =>
-            updCheck ("minus", name)
-            updCheck ("minus", name2)
-            val (rid, rc, perN) = preComp (name, rName)
-            for (i <- 0 until db_worker_count)
-                db ! minusIn (rid, subRelation (tableMap(name), i * perN,  math.min (rc, perN * (i + 1))),
-                    tableMap(name2), rName)
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("minus", name(i))
+                updCheck ("minus", name2(i))
+                updating += (rName (i) -> true)
+                db (relNodeMap (name (i))) ! minusIn (name (i), name2 (i), rName (i), name.size, "minus_" + randi)
+            }
 
         case product (name, name2, rName) =>
-            updCheck ("product", name)
-            updCheck ("product", name2)
-            val (rid, rc, perN) = preComp (name, rName)
-            for (i <- 0 until db_worker_count)
-                db ! productIn (rid, subRelation (tableMap(name), i * perN,  math.min (rc, perN * (i + 1))),
-                    tableMap(name2), rName)
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("product", name(i))
+                updCheck ("product", name2(i))
+                updating += (rName (i) -> true)
+                db (relNodeMap (name (i))) ! productIn (name (i), name2 (i), rName (i), name.size, "product_" + randi)
+            }
 
         case join (name, name2, rName) =>
-            updCheck ("join", name)
-            updCheck ("join", name2)
-            val (rid, rc, perN) = preComp (name, rName)
-            for (i <- 0 until db_worker_count)
-                db ! joinIn (rid, subRelation (tableMap(name), i * perN,  math.min (rc, perN * (i + 1))),
-                    tableMap(name2), rName)
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("join", name(i))
+                updCheck ("join", name2(i))
+                updating += (rName (i) -> true)
+                db (relNodeMap (name (i))) ! joinIn (name (i), name2 (i), rName (i), name.size, "join_" + randi)
+            }
 
         case intersect (name, name2, rName) =>
-            updCheck ("intersect", name)
-            updCheck ("intersect", name2)
-            val (rid, rc, perN) = preComp (name, rName)
-            for (i <- 0 until db_worker_count)
-                db ! intersectIn (rid, subRelation (tableMap(name), i * perN,  math.min (rc, perN * (i + 1))),
-                    tableMap(name2), rName)
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("intersect", name(i))
+                updCheck ("intersect", name2(i))
+                updating += (rName (i) -> true)
+                db (relNodeMap (name (i))) ! intersectIn (name (i), name2 (i), rName (i), name.size, "intersect_" + randi)
+            }
 
         // show the table
         // if you are getting updating warning, you may add sleep(time) before calling show()
         case show (name, limit) =>
-            updCheck ("show", name)
-            tableMap (name).show(limit)
+            for (i <- 0 until name.size) {
+                db (relNodeMap (name(i))) ! showIn (name (i), limit)
+            }
+
+        case getRelation (name, rName) =>
+            val randi = ri.nextInt (randomSeed)
+            for (i <- 0 until name.size) {
+                updCheck ("getRelation", name (i))
+                updating += (rName -> true)
+                db (relNodeMap (name(i))) ! getRelationIn (name(i), rName, name.size, "getRelation_" + randi)
+            }
 
         case delete (name) =>
-            updCheck ("delete", name)
-            if (tableMap.exists (_._1 == name)) tableMap -= name
+            for (i <- 0 until name.size) {
+                updCheck ("delete", name (i))
+                db (relNodeMap (name(i))) ! deleteIn (name (i))
+                relNodeMap = relNodeMap - name (i)
+            }
 
 
         // preprocessing
@@ -259,35 +217,100 @@ class MS_Master extends MasterUtil with Actor
             updating +=  (vName -> true)
             pp ! preprocessing.toRleVectorS2 (r, colPos, vName)
 
-        // analytics
-/*
+        /////////////////////////////////////// analytics
+        // ClassifierInt
+        case ClassifierInt (model, rName) =>
+            an ! ClassifierIntIn (model, rName)
 
-        case expSmoothing (method, t, x, l, m, validateSteps, steps) =>
-            an ! analytics.expSmoothing (method, t, x, l, m, validateSteps, steps)
+        case ClassifierInt_classify (name, z, xx, rName) =>
+            an ! ClassifierIntIn_classify (name, z, xx, rName)
 
-        case arima (method, t, y, d, p, q, transBack, steps) =>
-            an ! analytics.arima (method, t, y, d, p, q, transBack, steps)
+        case ClassifierInt_test (name, itest, xx, yy, rName) =>
+            an ! ClassifierIntIn_test (name, itest, xx, yy, rName)
 
-        case sarima (method, t, y, d, dd, period, xxreg, p, q ,steps, xxreg_f) =>
-            an ! analytics.sarima (method, t, y, d, dd, period, xxreg, p, q ,steps, xxreg_f)
-*/
+        case ClassifierInt_featureSelection (name, tol) =>
+            an ! ClassifierIntIn_featureSelection (name, tol)
 
+        case ClassifierInt_calcCorrelation (name, rName) =>
+            an ! ClassifierIntIn_calcCorrelation (name, rName)
+
+        case ClassifierInt_calcCorrelation2 (name, zrg, xrg, rName) =>
+            an ! ClassifierIntIn_calcCorrelation2 (name, zrg, xrg, rName)
+
+        // ClassifierReal
+        case ClassifierReal (model, rName) =>
+            an ! ClassifierRealIn (model, rName)
+
+        case ClassifierReal_classify (name, z, xx, rName) =>
+            an ! ClassifierRealIn_classify (name, z, xx, rName)
+
+        case ClassifierReal_test (name, itest, xx, yy, rName) =>
+            an ! ClassifierRealIn_test (name, itest, xx, yy, rName)
+
+        case ClassifierReal_featureSelection (name, tol) =>
+            an ! ClassifierRealIn_featureSelection (name, tol)
+
+        case ClassifierReal_calcCorrelation (name, rName) =>
+            an ! ClassifierRealIn_calcCorrelation (name, rName)
+
+        case ClassifierReal_calcCorrelation2 (name, zrg, xrg, rName) =>
+            an ! ClassifierRealIn_calcCorrelation2 (name, zrg, xrg, rName)
+
+        // PredictorVec
+        case PredictorVec_m (model, rName) =>
+            an ! PredictorVecIn_m (model, rName)
+
+        case PredictorVec_train (name, yy, rName) =>
+            an ! PredictorVecIn_train (name, yy, rName)
+
+        case PredictorVec_predict (name, d, v, rName) =>
+            an ! PredictorVecIn_predict (name, d, v, rName)
+
+        case PredictorVec_crossValidate (name, algor, k, rando, rName) =>
+            an ! PredictorVecIn_crossValidate (name, algor, k, rando, rName)
+
+        // PredictorMat
+        case PredictorMat_m (model, rName) =>
+            an ! PredictorMatIn_m (model, rName)
+
+        case PredictorMat_train (name, yy, rName) =>
+            an ! PredictorMatIn_train (name, yy, rName)
+
+        case PredictorMat_predict (name, v, z, rName) =>
+            an ! PredictorMatIn_predict (name, v, z, rName)
+
+        case PredictorMat_crossValidate (name, algor, k, rando, rName) =>
+            an ! PredictorMatIn_crossValidate (name, algor, k, rando, rName)
 
         // result methods
 
-        case relReply (id, r, rName) =>
-            // add elements to retTableMap -> do union of all the results -> (remove the entry from retTableMap)
-            if (retTableMap.exists (_._1 == id))
-                retTableMap (id) += r
+        case msgReply (rName, uc, t, m) =>
+            if (msgReplyMap.exists (_._1 == uc))
+                msgReplyMap += (uc -> (msgReplyMap(uc) + 1))
             else
-                retTableMap += (id -> ArrayBuffer (r))
-            if (retTableMap (id).size == db_worker_count) {
-                var r: Relation = retTableMap (id)(0)
-                for (i <- 1 until db_worker_count)
-                    r = r union retTableMap (id)(i)
+                msgReplyMap += (uc -> 1)
+            updating += (rName -> false)
+            if (msgReplyMap (uc) == t) {
+                println(m + " opeartion done")
+                msgReplyMap = msgReplyMap - uc
+            }
+
+
+        case relReply (uc, r, rName, t) =>
+            // add elements to retTableMap -> do union of all the results -> (remove the entry from retTableMap)
+            if (retTableMap.exists (_._1 == uc))
+                retTableMap (uc) += r
+            else
+                retTableMap += (uc -> ArrayBuffer (r))
+            if (retTableMap (uc).size == t) {
+                var r: Relation = retTableMap (uc)(0)
+                for (i <- 1 until t)
+                    r = r union retTableMap (uc)(i)
                 r.name = rName
-                tableMap += (rName -> r)
-                retTableMap -= id
+                val n = 20
+                println("printing first " + n + " lines of " + rName)
+                r.show (n)
+                retTableMap = retTableMap - uc
                 updating += (rName -> false)
             }
 
@@ -321,7 +344,7 @@ class MS_Master extends MasterUtil with Actor
 
         case printPaths() =>
             println("Master: ", self.path.address.host)
-            println("DB: ", db.path.address.host)
+            println("DB: ", db(0).path.address.host)
             println("PP: " + pp.path)
             println("PP_host: " + pp.path.address.hostPort)
             println("AN: " + an.path)
@@ -370,7 +393,7 @@ class MS_Master extends MasterUtil with Actor
     }
 }
 
-//> runMain scalation.master.MS_MasterTest0
+/*//> runMain scalation.master.MS_MasterTest0
 object MS_MasterTest0 extends App
 {
     val actorSystem = ActorSystem("RelationDBMasterTest")
@@ -413,7 +436,7 @@ object MS_MasterTest1 extends App
 
     Thread.sleep(10000)
     actorSystem.terminate()
-}
+}*/
 
 object MS_MasterTest2 extends App
 {
