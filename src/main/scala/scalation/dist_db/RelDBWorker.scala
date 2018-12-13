@@ -1,6 +1,7 @@
 package scalation.dist_db
 
 import akka.actor.{Actor, ActorRef, Props}
+import akka.persistence.PersistentActor
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -10,16 +11,70 @@ import scalation.columnar_db.{Relation, TableGen}
   * Created by vinay on 10/14/18.
   */
 
+object RelationPersistence {
+
+    private var mem: Map[ String, Relation ] = Map[ String, Relation ]()
+
+    case class m_saveRelation (n: String, r: Relation)
+    case class m_dropRelation (n: String)
+    case class p_saveRelation (n: String, r: Relation)
+    case class p_dropRelation (n: String)
+    case class p_getRelation (n: String)
+
+}
+
+class RelationPersistence extends PersistentActor {
+
+    override def persistenceId: String = "Relation_Persistence"
+
+    import RelationPersistence._
+
+    override def receiveRecover: Receive = {
+        case m_saveRelation (n, r) =>
+            mem = mem + (n -> r)
+        case m_dropRelation (n) =>
+            mem = mem - n
+    }
+
+    override def receiveCommand: Receive = {
+        case p_saveRelation (n, r) =>
+            persist (m_saveRelation (n, r)) {
+                savingRelation => mem = mem + (n -> r)
+            }
+        case p_dropRelation (n) =>
+            persist (m_dropRelation (n)) {
+                savingRelation => mem = mem - n
+            }
+        case p_getRelation (n) =>
+            sender() ! getPRelReply (n, mem(n))
+    }
+
+}
+
 
 class RelDBWorker extends Actor {
+
+    import RelationPersistence._
 
     //    val routee: ActorRef = context.actorOf(Props[RelDBWorker], "routee")
 
     var relMap : Map[String, Relation] = Map[String, Relation]()
 
+    val pactor: ActorRef = context.actorOf (Props[RelationPersistence], "persistence_actor")
+
     // DBWorker is implementation of worker nodes.
     // This receives messages from master and performs the operations from columnar_db
     def DBWorker() : Receive = {
+
+        // persistence methods
+        case saveRelation (n) =>
+            pactor ! p_saveRelation (n, relMap(n))
+        case dropRelation (n) =>
+            pactor ! p_dropRelation (n)
+        case getPRelation (n) =>
+            pactor ! p_getRelation (n)
+        case getPRelReply (n, r) =>
+            if (!relMap.exists(_._1 == n)) relMap += (n -> r)
 
         case createInR (r) =>
             relMap += (r.name -> r)

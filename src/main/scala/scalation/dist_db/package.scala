@@ -15,6 +15,13 @@ package object dist_db {
       */
     type Predicate [T] = (String, T => Boolean)
 
+    // persistence methods
+    case class saveRelation (n: String)
+    case class dropRelation (n: String)
+    case class getPRelation (n: String)
+    case class getPRelReply (n: String, r: Relation)
+
+    // Relation methods
     case class createInR (r: Relation)
     case class createFromCSV (fname: Seq[String], name: Seq[String], colname: Seq[String], key: Int, domain: String,
                               skip: Int = 0, eSep: String = ",")
