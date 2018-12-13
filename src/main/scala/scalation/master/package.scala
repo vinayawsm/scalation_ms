@@ -18,6 +18,13 @@ package object master
       */
     type Predicate [T] = (String, T => Boolean)
 
+
+    // persistence methods
+    case class saveRelation (n: Seq[String])
+    case class dropRelation (n: Seq[String])
+    case class loadRelation (n: Seq[String])
+
+    // Relation methods
     case class createFromCSV (fname: Seq[String], name: Seq[String], colname: Seq[String], key: Int, domain: String,
                               skip: Int = 0, eSep: String = ",")
 

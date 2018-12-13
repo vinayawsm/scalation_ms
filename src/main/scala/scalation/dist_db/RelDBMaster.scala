@@ -32,6 +32,17 @@ class RelDBMaster extends DistUtil with Actor
     def DBHandler (): Receive =
     {
 
+        // persistence methods
+        case saveRelation (name) =>
+            for (i <- 0 until name.size)
+                db (relNodeMap (name (i))) ! saveRelationIn (name(i))
+        case dropRelation (name) =>
+            for (i <- 0 until name.size)
+                db (relNodeMap (name (i))) ! dropRelationIn (name(i))
+        case loadRelation (name) =>
+            for (i <- 0 until name.size)
+                db (relNodeMap (name (i))) ! loadRelationIn (name(i))
+
         // Takes partitions of data from csv files and creates relations in sequential order
         // (nth .csv file will be in n%numOfRoutees node)
         case createFromCSV (fname, name, colname, key, domain, skip, eSep) =>

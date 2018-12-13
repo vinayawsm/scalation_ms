@@ -46,7 +46,7 @@ class RelationPersistence extends PersistentActor {
                 savingRelation => mem = mem - n
             }
         case p_getRelation (n) =>
-            sender() ! getPRelReply (n, mem(n))
+            sender() ! loadRelReplyIn (n, mem(n))
     }
 
 }
@@ -67,14 +67,14 @@ class RelDBWorker extends Actor {
     def DBWorker() : Receive = {
 
         // persistence methods
-        case saveRelation (n) =>
+        case saveRelationIn (n) =>
             pactor ! p_saveRelation (n, relMap(n))
-        case dropRelation (n) =>
+        case dropRelationIn (n) =>
             pactor ! p_dropRelation (n)
-        case getPRelation (n) =>
+        case loadRelationIn (n) =>
             pactor ! p_getRelation (n)
-        case getPRelReply (n, r) =>
-            if (!relMap.exists(_._1 == n)) relMap += (n -> r)
+        case loadRelReplyIn (n, r) =>
+            relMap += (n -> r)
 
         case createInR (r) =>
             relMap += (r.name -> r)

@@ -16,10 +16,13 @@ package object dist_db {
     type Predicate [T] = (String, T => Boolean)
 
     // persistence methods
-    case class saveRelation (n: String)
-    case class dropRelation (n: String)
-    case class getPRelation (n: String)
-    case class getPRelReply (n: String, r: Relation)
+    case class saveRelation (n: Seq[String])
+    case class dropRelation (n: Seq[String])
+    case class loadRelation (n: Seq[String])
+    case class saveRelationIn (n: String)
+    case class dropRelationIn (n: String)
+    case class loadRelationIn (n: String)
+    case class loadRelReplyIn (n: String, r: Relation)
 
     // Relation methods
     case class createInR (r: Relation)
