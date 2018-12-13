@@ -260,6 +260,7 @@ class MS_Master extends MasterUtil with Actor
             pp ! preprocessing.toRleVectorS2 (r, colPos, vName)
 
         // analytics
+/*
 
         case expSmoothing (method, t, x, l, m, validateSteps, steps) =>
             an ! analytics.expSmoothing (method, t, x, l, m, validateSteps, steps)
@@ -269,6 +270,7 @@ class MS_Master extends MasterUtil with Actor
 
         case sarima (method, t, y, d, dd, period, xxreg, p, q ,steps, xxreg_f) =>
             an ! analytics.sarima (method, t, y, d, dd, period, xxreg, p, q ,steps, xxreg_f)
+*/
 
 
         // result methods

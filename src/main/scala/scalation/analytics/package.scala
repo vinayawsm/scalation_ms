@@ -7,31 +7,49 @@ package object analytics
 
     type Strings = Array [String]
 
-    // abstract class ClassifierInt (x: MatriI, y: VectoI, protected var fn: Strings = null,
-    //                              k: Int, protected var cn: Strings = null)
-    // method: which method to use
-    //          (BayesClassifier, DecisionTreeID3, NullModel)
-    // sbc: sub-bayes classifier method
-    //          {Naive Bayes, 1-BAN, TAN Bayes, 2-BAN-OS}
-    // modelName: name with which this model should be saved as
-    case class ClassifierInt (method: String, x: MatriI = null, y: VectoI = null, fn: Strings = null, k: Int, cn: Strings = null,
-                              vc: Array[Int] = null, me: Float = 0, th: Double = 0.0, sbc: String = "Naive Bayes", modelName: String)
+    // ClassifierInt
+    case class ClassifierInt (model: analytics.classifier.ClassifierInt, name: String)
+    case class ClassifierIntIn (model: analytics.classifier.ClassifierInt, name: String)
+
+    case class ClassifierInt_classify (name: String, z: VectoD = null, xx: MatriI = null, rName: String)
+    case class ClassifierInt_test (name: String, itest: IndexedSeq [Int] = null, xx: MatriI = null, yy: VectoI = null, rName: String)
+    case class ClassifierInt_featureSelection (name: String, tol: Double = 0.01)
+    case class ClassifierInt_calcCorrelation (name: String, rName: String)
+    case class ClassifierInt_calcCorrelation2 (name: String, zrg: Range, xrg: Range, rName: String)
+    case class ClassifierIntIn_classify (name: String, z: VectoD = null, xx: MatriI = null, rName: String)
+    case class ClassifierIntIn_test (name: String, itest: IndexedSeq [Int] = null, xx: MatriI = null, yy: VectoI = null, rName: String)
+    case class ClassifierIntIn_featureSelection (name: String, tol: Double)
+    case class ClassifierIntIn_calcCorrelation (name: String, rName: String)
+    case class ClassifierIntIn_calcCorrelation2 (name: String, zrg: Range, xrg: Range, rName: String)
 
 
-    case class ClassifierReal (method: String, x: MatriD = null, xv: VectorD = null, y: VectoI = null, fn: Strings = null,
-                               k: Int = 2, cn: Strings = null, isConst: Array [Boolean], vc: Array[Int] = null, td: Int = 0,
-                               nF: Int = 1, bR: Double = 1.0, fS: Int = 1, s: Int = 223, modelName: String)
+    // ClassifierReal
+    case class ClassifierReal (model: analytics.classifier.ClassifierReal, name: String)
+    case class ClassifierRealIn (model: analytics.classifier.ClassifierReal, name: String)
+
+    case class ClassifierReal_classify (name: String, z: VectoD = null, xx: MatriD = null, rName: String)
+    case class ClassifierReal_test (name: String, itest: IndexedSeq [Int] = null, xx: MatriD = null, yy: VectoI = null, rName: String)
+    case class ClassifierReal_featureSelection (name: String, tol: Double)
+    case class ClassifierReal_calcCorrelation (name: String, rName: String)
+    case class ClassifierReal_calcCorrelation2 (name: String, zrg: Range, xrg: Range, rName: String)
+    case class ClassifierRealIn_classify (name: String, z: VectoD = null, xx: MatriD = null, rName: String)
+    case class ClassifierRealIn_test (name: String, itest: IndexedSeq [Int] = null, xx: MatriD = null, yy: VectoI = null, rName: String)
+    case class ClassifierRealIn_featureSelection (name: String, tol: Double)
+    case class ClassifierRealIn_calcCorrelation (name: String, rName: String)
+    case class ClassifierRealIn_calcCorrelation2 (name: String, zrg: Range, xrg: Range, rName: String)
+
+    // PredictorVec
+    case class PredictorVec_m (model: analytics.PredictorVec, name: String)
+    case class PredictorVecIn_m (model: analytics.PredictorVec, name: String)
+
+    case class PredictorVec_train (name: String, yy: VectoD = null, rName: String)
+    case class PredictorVec_predict (name: String, d: Double = null, v: VectoD = null, rName: String)
+    case class PredictorVec_crossValidate (name: String, algor: (VectoD, VectoD, Int) => PredictorVec, k: Int = 10,
+                                           rando: Boolean = true, rName: String)
+    case class PredictorVecIn_train (name: String, yy: VectoD = null, rName: String)
+    case class PredictorVecIn_predict (name: String, d: Double = null, v: VectoD = null, rName: String)
+    case class PredictorVecIn_crossValidate (name: String, algor: (VectoD, VectoD, Int) => PredictorVec, k: Int = 10,
+                                           rando: Boolean = true, rName: String)
 
 
-    // class ExpSmoothing (y_ : VectoD, ll: Int = 1, multiplicative : Boolean = false, validateSteps : Int = 1)
-    // method - "Customized" or "Optimized"
-    case class expSmoothing (method: String, t: VectoD, x: VectoD, l: Int = 1, m: Boolean = false, validateSteps: Int = 1, steps: Int = 1)
-
-    // class ARIMA (t: VectoD, y: VectoD, d: Int = 0)
-    // method - "AR", "MA", "ARMA"
-    case class arima (method: String, t: VectoD, y: VectoD, d: Int = 0, p: Int = 1, q: Int = 1,
-                      transBack: Boolean = true, steps: Int = 1)
-
-    case class sarima (method: String, t: VectoD, y: VectoD, d: Int = 0, dd: Int = 0, period: Int = 1,
-                       xxreg: MatriD = null, p: Int = 1, q: Int = 1 ,steps: Int = 1, xxreg_f : MatriD = null)
 }

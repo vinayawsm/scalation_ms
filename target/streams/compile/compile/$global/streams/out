@@ -1,4 +1,14 @@
-[0m[[0m[31merror[0m] [0m[0m/home/vinay/UGA/Acad/Fall18/Directed Study/november/github/scalation_ms/scalation_ms/src/main/scala/scalation/analytics/AnalyticsMaster.scala:30:35: value featureSelection is not a member of scalation.analytics.ClassifierInt[0m
-[0m[[0m[31merror[0m] [0m[0m                    ci(modelName).featureSelection()[0m
-[0m[[0m[31merror[0m] [0m[0m                                  ^[0m
-[0m[[0m[31merror[0m] [0m[0mone error found[0m
+[0m[[0m[31merror[0m] [0m[0m/home/vinay/UGA/Acad/Fall18/Directed Study/november/github/scalation_ms/scalation_ms/src/main/scala/scalation/analytics/AnalyticsWorker.scala:33:23: value += is not a member of Map[String,scalation.linalgebra.MatriD][0m
+[0m[[0m[31merror[0m] [0m[0m  Expression does not convert to assignment because:[0m
+[0m[[0m[31merror[0m] [0m[0m    type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m     found   : String[0m
+[0m[[0m[31merror[0m] [0m[0m     required: Range[0m
+[0m[[0m[31merror[0m] [0m[0m    expansion: AnalyticsWorker.this.matriDMap = AnalyticsWorker.this.matriDMap.+(name.$minus$greater(ci(name).calcCorrelation2(zrg, xrg)))[0m
+[0m[[0m[31merror[0m] [0m[0m            matriDMap += (name -> ci(name).calcCorrelation2 (zrg, xrg))[0m
+[0m[[0m[31merror[0m] [0m[0m                      ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/vinay/UGA/Acad/Fall18/Directed Study/november/github/scalation_ms/scalation_ms/src/main/scala/scalation/analytics/AnalyticsWorker.scala:33:67: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String[0m
+[0m[[0m[31merror[0m] [0m[0m required: Range[0m
+[0m[[0m[31merror[0m] [0m[0m            matriDMap += (name -> ci(name).calcCorrelation2 (zrg, xrg))[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m

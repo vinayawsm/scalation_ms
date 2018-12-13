@@ -14,3 +14,5 @@ runMain scalation.master.MS_MasterTest0_1
 runMain scalation.master.MS_MasterTest1
 runMain scalation.master.MS_MasterTest2
 compile
+runMain scalation.analytics.AnalyticsMasterTest1
+compile
