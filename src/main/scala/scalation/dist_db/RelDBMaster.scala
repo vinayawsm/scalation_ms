@@ -14,46 +14,6 @@ import scalation.linalgebra.Vec
   * Created by vinay on 10/10/18.
   */
 
-object RelNodePersistence {
-
-    private var mem: Map[ String, Map [String, Int] ] = Map[ String, Map [String, Int] ]()
-
-    case class m_saveRelation (n: String, r: Relation)
-    case class m_dropRelation (n: String)
-    case class p_saveRelation (n: String, r: Relation)
-    case class p_dropRelation (n: String)
-    case class p_getRelation (n: String)
-
-}
-
-class RelNodePersistence extends PersistentActor {
-
-    override def persistenceId: String = "Relation_Persistence"
-
-    import RelationPersistence._
-
-    override def receiveRecover: Receive = {
-        case m_saveRelation (n, r) =>
-            mem = mem + (n -> r)
-        case m_dropRelation (n) =>
-            mem = mem - n
-    }
-
-    override def receiveCommand: Receive = {
-        case p_saveRelation (n, r) =>
-            persist (m_saveRelation (n, r)) {
-                savingRelation => mem = mem + (n -> r)
-            }
-        case p_dropRelation (n) =>
-            persist (m_dropRelation (n)) {
-                savingRelation => mem = mem - n
-            }
-        case p_getRelation (n) =>
-            sender() ! loadRelReplyIn (n, mem(n))
-    }
-
-}
-
 class RelDBMaster extends DistUtil with Actor
 {
 
