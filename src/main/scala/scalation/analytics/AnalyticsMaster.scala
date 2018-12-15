@@ -4,9 +4,8 @@ import akka.actor.{Actor, ActorSystem, Props}
 
 import scalation.analytics.classifier._
 import scalation.analytics.forecaster._
-import scalation.linalgebra.{MatrixD, MatrixI, VectoD, VectorD}
-import scalation.plot.Plot
-import scalation.random.Random
+import scalation.analytics._
+import scalation.linalgebra._
 
 class AnalyticsMaster extends Actor
 {

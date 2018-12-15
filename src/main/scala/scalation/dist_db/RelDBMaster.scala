@@ -1,12 +1,9 @@
 package scalation.dist_db
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.routing._
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
-import scalation.columnar_db.TableObj.ucount
-import scalation.columnar_db.{Relation, TableGen}
+import scalation.columnar_db.{Relation}
 import scalation.linalgebra.Vec
 
 /**

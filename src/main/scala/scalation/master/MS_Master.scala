@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 import scalation.{analytics, preprocessing}
 import scalation.analytics._
 import scalation.columnar_db._
-import scalation.dist_db.{createFromCSVIn, _}
+import scalation.dist_db._
 import scalation.linalgebra.Vec
 import scalation.preprocessing.PreProcessingMaster
 
