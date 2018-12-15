@@ -44,6 +44,12 @@ class AnalyticsWorker extends Actor {
             if (itest == null) doubleMap += (rName -> ci(name).test (xx, yy))
             else doubleMap += (rName -> ci(name).test (itest))
 
+        case ClassifierIntIn_crossValidate (name, nx, show) =>
+            ci(name).crossValidate (nx, show)
+
+        case ClassifierIntIn_crossValidateRand (name, nx, show) =>
+            ci(name).crossValidateRand (nx, show)
+
         case ClassifierIntIn_featureSelection (name, tol) =>
             ci(name).featureSelection (tol)
 
@@ -65,6 +71,12 @@ class AnalyticsWorker extends Actor {
         case ClassifierRealIn_test (name, itest, xx, yy, rName) =>
             if (itest == null) doubleMap += (rName -> cr(name).test (xx, yy))
             else doubleMap += (rName -> cr(name).test (itest))
+
+        case ClassifierRealIn_crossValidate (name, nx, show) =>
+            cr(name).crossValidate (nx, show)
+
+        case ClassifierRealIn_crossValidateRand (name, nx, show) =>
+            cr(name).crossValidateRand (nx, show)
 
         case ClassifierRealIn_featureSelection (name, tol) =>
             cr(name).featureSelection (tol)

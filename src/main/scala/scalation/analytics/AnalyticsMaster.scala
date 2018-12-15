@@ -27,6 +27,12 @@ class AnalyticsMaster extends Actor
         case ClassifierInt_test (name, itest, xx, yy, rName) =>
             an ! ClassifierIntIn_test (name, itest, xx, yy, rName)
 
+        case ClassifierInt_crossValidate (name, nx, show) =>
+            an ! ClassifierIntIn_crossValidate (name, nx, show)
+
+        case ClassifierInt_crossValidateRand (name, nx, show) =>
+            an ! ClassifierIntIn_crossValidateRand (name, nx, show)
+
         case ClassifierInt_featureSelection (name, tol) =>
             an ! ClassifierIntIn_featureSelection (name, tol)
 
@@ -45,6 +51,12 @@ class AnalyticsMaster extends Actor
 
         case ClassifierReal_test (name, itest, xx, yy, rName) =>
             an ! ClassifierRealIn_test (name, itest, xx, yy, rName)
+
+        case ClassifierReal_crossValidate (name, nx, show) =>
+            an ! ClassifierRealIn_crossValidate (name, nx, show)
+
+        case ClassifierReal_crossValidateRand (name, nx, show) =>
+            an ! ClassifierRealIn_crossValidateRand (name, nx, show)
 
         case ClassifierReal_featureSelection (name, tol) =>
             an ! ClassifierRealIn_featureSelection (name, tol)
